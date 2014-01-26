@@ -2,6 +2,8 @@
 
 var fn = {};
 
+fn.identity = fn.id = function (arg) { return arg; };
+
 fn.toArray = function (collection) {
 	return [].slice.call(collection);
 };
@@ -61,6 +63,9 @@ fn.partial = function () {
 	};
 };
 
+fn.op['++'] = fn.partial(fn.op['+'], 1);
+fn.op['--'] = fn.partial(fn.op['+'], -1);
+
 fn.curry = function (handler, arity) {
 	arity = arity || handler.length;
 
@@ -103,15 +108,26 @@ fn.reduce = function (handler, collection, accumulator, params) {
 	return accumulator;
 };
 
+fn.foldl = function (handler, accumulator, collection) {
+	if(collection.length === 0) {
+		return accumulator;
+	}
+	return fn.foldl(handler, fn.apply(handler, [accumulator, collection[0]]), collection.slice(1));
+};
+
+fn.foldr = function (handler, accumulator, collection) {
+	if(collection.length === 0) {
+		return accumulator;
+	}
+	return fn.apply(handler, [collection[0], fn.foldr(handler, accumulator, collection.slice(1))]);
+};
+
 fn.filter = function (expression, collection) {
 	return fn.reduce(function (accumulator, item, index) {
 		expression(item, index) && accumulator.push(item);
 		return accumulator;
 	}, collection, []);
 };
-
-fn.op['++'] = fn.partial(fn.op['+'], 1);
-fn.op['--'] = fn.partial(fn.op['+'], -1);
 
 fn.map = function (handler, collection, params) {
 	return fn.reduce(function (accumulator, value, index) {
